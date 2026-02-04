@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Bank Transaction System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Simple Auth Guard
+        if (!sessionStorage.getItem('isLoggedIn')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+</head>
+
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-university"></i>
+                <span>BankPro</span>
+            </div>
+            <nav>
+                <a href="#" class="nav-link" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="#" class="nav-link" data-section="accounts">
+                    <i class="fas fa-wallet"></i> Accounts
+                </a>
+                <a href="#" class="nav-link" data-section="transactions">
+                    <i class="fas fa-exchange-alt"></i> Transactions
+                </a>
+                <a href="#" class="nav-link" data-section="transfer">
+                    <i class="fas fa-paper-plane"></i> Transfer
+                </a>
+                <a href="#" class="nav-link" data-section="history">
+                    <i class="fas fa-history"></i> History
+                </a>
+                <a href="#" class="nav-link" data-section="pending">
+                    <i class="fas fa-clock"></i> Pending
+                </a>
+                <a href="#" class="nav-link" data-section="rollback">
+                    <i class="fas fa-undo"></i> Rollback
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="theme-toggle" class="theme-toggle">
+                    <i class="fas fa-moon"></i> Dark Mode
+                </button>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 id="page-title">Dashboard</h1>
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Admin</span>
+                </div>
+            </header>
+            <div class="content">
+                <div id="dashboard" class="section active">
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <h3><i class="fas fa-users"></i> Total Accounts</h3>
+                            <p id="total-accounts">0</p>
+                        </div>
+                        <div class="card">
+                            <h3><i class="fas fa-dollar-sign"></i> Total Balance</h3>
+                            <p id="total-balance">$0.00</p>
+                        </div>
+                        <div class="card">
+                            <h3><i class="fas fa-clock"></i> Pending Transactions</h3>
+                            <p id="pending-transactions">0</p>
+                        </div>
+                        <div class="card">
+                            <h3><i class="fas fa-history"></i> Total Transactions</h3>
+                            <p id="total-transactions">0</p>
+                        </div>
+                    </div>
+                    <div class="charts-wrapper"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                        <div class="chart-container">
+                            <canvas id="balance-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="activity-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="process-btn">
+                        <button id="manual-log-btn" class="btn-primary"><i class="fas fa-download"></i> Manual Log
+                            Export</button>
+                        <button id="clear-logs-btn" class="btn-secondary"><i class="fas fa-trash-alt"></i> Clear
+                            Logs</button>
+                        <button id="reset-data-btn" class="btn-secondary danger"><i
+                                class="fas fa-exclamation-triangle"></i> Reset Accounts &amp; History</button>
+                    </div>
+                </div>
+                <div id="accounts" class="section">
+                    <div class="form-card">
+                        <h2><i class="fas fa-plus-circle"></i> Add New Account</h2>
+                        <form id="add-account-form">
+                            <div class="form-group">
+                                <label for="acc-id">Account ID</label>
+                                <input type="number" id="acc-id" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="acc-balance">Initial Balance</label>
+                                <input type="number" id="acc-balance" step="0.01" min="0" required>
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-plus"></i> Add Account
+                            </button>
+                        </form>
+                    </div>
+                    <div class="form-card">
+                        <h2><i class="fas fa-search"></i> Fetch Account Info</h2>
+                        <form id="lookup-account-form">
+                            <div class="form-group">
+                                <label for="lookup-id">Account ID</label>
+                                <input type="number" id="lookup-id" required>
+                            </div>
+                            <button type="submit" class="btn-secondary">
+                                <i class="fas fa-search"></i> Fetch Details
+                            </button>
+                        </form>
+                        <div class="data-card inline-card">
+                            <h3>Account Details</h3>
+                            <div id="account-info-display" class="data-list">
+                                <p>Enter an account ID to view details.</p>
+                            </div>
+                        </div>
+                        <div class="data-card inline-card">
+                            <h3>Transaction History</h3>
+                            <div id="account-history-display" class="data-list">
+                                <p>No transactions to show.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="data-card">
+                        <h2><i class="fas fa-wallet"></i> Account Balances</h2>
+                        <div class="search-bar">
+                            <input type="text" id="search-accounts" placeholder="Search accounts...">
+                            <button id="btn-search-accounts" class="btn-secondary"><i
+                                    class="fas fa-search"></i></button>
+                        </div>
+                        <div id="accounts-list" class="data-list"></div>
+                    </div>
+                </div>
+                <div id="transactions" class="section">
+                    <div class="form-card">
+                        <h2><i class="fas fa-credit-card"></i> Add Pending Transaction</h2>
+                        <form id="add-transaction-form">
+                            <div class="form-group">
+                                <label for="trans-id">Account ID</label>
+                                <input type="number" id="trans-id" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="trans-device">Device ID (for Fraud Check)</label>
+                                <input type="text" id="trans-device" placeholder="e.g. dev_01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="trans-type">Type</label>
+                                <select id="trans-type" required>
+                                    <option value="D">Deposit</option>
+                                    <option value="W">Withdraw</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="trans-amount">Amount</label>
+                                <input type="number" id="trans-amount" step="0.01" min="0.01" required>
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-plus"></i> Add Transaction
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="transfer" class="section">
+                    <div class="form-card">
+                        <h2><i class="fas fa-exchange-alt"></i> Transfer Money</h2>
+                        <form id="transfer-form">
+                            <div class="form-group">
+                                <label for="from-id">From Account ID</label>
+                                <input type="number" id="from-id" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="to-id">To Account ID</label>
+                                <input type="number" id="to-id" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="transfer-amount">Amount</label>
+                                <input type="number" id="transfer-amount" step="0.01" min="0.01" required>
+                            </div>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-paper-plane"></i> Transfer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div id="history" class="section">
+                    <div class="data-card">
+                        <h2><i class="fas fa-history"></i> Transaction History</h2>
+                        <div class="search-bar">
+                            <input type="text" id="search-history" placeholder="Enter Account ID (e.g. 101)">
+                            <button id="btn-search-history" class="btn-secondary"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div id="history-list" class="data-list"></div>
+                    </div>
+                </div>
+                <div id="pending" class="section">
+                    <div class="data-card">
+                        <h2><i class="fas fa-clock"></i> Pending Transactions</h2>
+                        <div class="process-btn">
+                            <button id="process-transaction-btn" class="btn-secondary"><i class="fas fa-play"></i>
+                                Process Transaction</button>
+                        </div>
+                        <div id="pending-list" class="data-list"></div>
+                    </div>
+                </div>
+                <div id="rollback" class="section">
+                    <div class="data-card">
+                        <h2><i class="fas fa-undo"></i> Rollback Stack</h2>
+                        <div class="process-btn">
+                            <button id="rollback-transaction-btn" class="btn-secondary"><i class="fas fa-undo"></i>
+                                Rollback Last</button>
+                        </div>
+                        <div id="rollback-list" class="data-list"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="notification" class="notification"></div>
+    <script src="script.js"></script>
+</body>
+
+</html>
